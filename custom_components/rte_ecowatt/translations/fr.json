@@ -47,7 +47,8 @@
         "menu_options": {
           "finish_configuration": "Terminer la configuration",
           "configure_hours_sensor": "Configurer un autre capteur avec une granularité horaire",
-          "configure_days_sensor": "Configurer un autre capteur avec une granularité journalière"
+          "configure_days_sensor": "Configurer un autre capteur avec une granularité journalière",
+          "finish_configuration": "Supprimer un capteur"
         }
       },
       "configure_hours_sensor": {

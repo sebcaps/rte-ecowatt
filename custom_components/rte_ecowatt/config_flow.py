@@ -2,18 +2,22 @@ import voluptuous as vol
 import logging
 from typing import Any, Optional
 from oauthlib.oauth2 import rfc6749
-
+from copy import deepcopy
 from homeassistant import config_entries
 import homeassistant.helpers.config_validation as cv
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import AbortFlow, FlowResult
-
+from homeassistant.helpers.entity_registry import (
+    async_entries_for_config_entry,
+    async_get_registry,
+)
 from .const import DOMAIN
 from .const import (
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
     CONF_SENSOR_UNIT,
     CONF_SENSOR_SHIFT,
+    CONF_SENSORS,
 )
 from . import AsyncOauthClient
 
@@ -135,6 +139,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize options flow."""
         self.config_entry = config_entry
         self.user_input = None
+        self.all_sensors = None
+        self.sensor_map = None
+        self.entity_registry = None
 
     async def async_step_init(
         self, user_input: Optional[dict[str, Any]] = None
@@ -145,7 +152,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             self.user_input: dict[
                 str, Any
             ] = self.config_entry.data  # casting is a bit brutal but works
-
+        # Grab all configured sensors from the entity registry so we can populate the
+        # multi-select dropdown that will allow a user to remove a sensor.
+        self.entity_registry = await async_get_registry(self.hass)
+        entries = async_entries_for_config_entry(
+            self.entity_registry, self.config_entry.entry_id
+        )
+        # Default value for our multi-select.
+        self.all_sensors = {e.entity_id: e.original_name for e in entries}
+        self.sensor_map = {e.entity_id: e for e in entries}
         return self._configuration_menu("init")
 
     def _configuration_menu(self, step_id: str):
@@ -155,6 +170,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 "finish_configuration",
                 "configure_hours_sensor",
                 "configure_days_sensor",
+                "delete_sensor",
             ],
         )
 
@@ -176,6 +192,48 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self, user_input: Optional[dict[str, Any]] = None
     ):
         return self._manual_configuration_step("days", vol.In(range(4)), user_input)
+
+    async def async_step_delete_sensor(
+        self, user_input: Optional[dict[str, Any]] = None
+    ):
+        _LOGGER.info(f"User will delete on or more sensor(s)")
+        _LOGGER.debug(f"User Input is :{user_input}")
+        errors: Dict[str, str] = {}
+        if user_input is not None:
+
+            updated_sensor = deepcopy(self.config_entry.data[CONF_SENSORS])
+
+            # Remove any unchecked sensor.
+            removed_sensors = [
+                entity_id
+                for entity_id in self.sensor_map.keys()
+                if entity_id not in user_input[CONF_SENSORS]
+            ]
+            _LOGGER.debug(f"Removed sensor is : {removed_sensors}")
+            _LOGGER.debug(f"updated_sensor sensor is : {updated_sensor}")
+            for entity_id in removed_sensors:
+                _LOGGER.debug(f"Removed sensor entity_id is : {entity_id}")
+                # Unregister from HA
+                self.entity_registry.async_remove(entity_id)
+                # Remove from our configured sensor.
+                entry = self.sensor_map[entity_id]
+                entry_path = entry.unique_id
+                _LOGGER.debug(f"entry_path is : {entry_path}")
+                _LOGGER.debug(f"updated_sensor is : {updated_sensor}")
+                updated_sensor = [e for e in updated_sensor if e["path"] != entry_path]
+
+        return self.async_show_form(
+            step_id="delete_sensor",
+            # data_schema=vol.Schema(data_schema),
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_SENSORS, default=list(self.all_sensors.keys())
+                    ): cv.multi_select(self.all_sensors)
+                }
+            ),
+            errors=errors,
+        )
 
     def _manual_configuration_step(
         self, sensor_unit, validator, user_input: Optional[dict[str, Any]] = None

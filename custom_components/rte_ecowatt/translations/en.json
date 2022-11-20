@@ -47,7 +47,8 @@
         "menu_options": {
           "finish_configuration": "Finish configuration",
           "configure_hours_sensor": "Configure another sensor with hour granularity",
-          "configure_days_sensor": "Configure another sensor with day granularity"
+          "configure_days_sensor": "Configure another sensor with day granularity",
+          "delete_sensor": "Delete sensor(s)"
         }
       },
       "configure_hours_sensor": {
@@ -58,7 +59,8 @@
         "menu_options": {
           "finish_configuration": "Finish configuration",
           "configure_hours_sensor": "Configure another sensor with hour granularity",
-          "configure_days_sensor": "Configure another sensor with day granularity"
+          "configure_days_sensor": "Configure another sensor with day granularity",
+          "delete_sensor": "Delete sensor(s)"
         }
       },
       "configure_days_sensor": {
@@ -69,13 +71,24 @@
         "menu_options": {
           "finish_configuration": "Finish configuration",
           "configure_hours_sensor": "Configure another sensor with hour granularity",
-          "configure_days_sensor": "Configure another sensor with day granularity"
+          "configure_days_sensor": "Configure another sensor with day granularity",
+          "delete_sensor": "Delete sensor(s)"
+        }
+      },
+      "delete_sensor": {
+        "description": "Delete a sensor",
+        "data": {},
+        "menu_options": {
+          "finish_configuration": "Finish configuration",
+          "configure_hours_sensor": "Configure another sensor with hour granularity",
+          "configure_days_sensor": "Configure another sensor with day granularity",
+          "delete_sensor": "Delete sensor(s)"
         }
       }
-    },
-    "error": {
-      "auth_error": "Authentication failed, credentials must be invalid",
-      "generic_error": "Connection to RTE api failed for an unknown reason"
     }
+  },
+  "error": {
+    "auth_error": "Authentication failed, credentials must be invalid",
+    "generic_error": "Connection to RTE api failed for an unknown reason"
   }
 }
